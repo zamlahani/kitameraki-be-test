@@ -1,6 +1,6 @@
 import type { SqlParameter } from '@azure/cosmos';
 import { HttpError } from './errors';
-import { TASK_PRIORITIES, TASK_STATUSES, type TaskPriority, type TaskStatus } from './taskModel';
+import { TASK_PRIORITIES, TASK_STATUSES, type TaskPriority, type TaskStatus } from '../models/taskModel';
 
 export interface ListTasksQuery {
   organizationId: string;

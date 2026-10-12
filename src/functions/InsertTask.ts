@@ -4,7 +4,7 @@ import { getTasksContainer } from '../shared/cosmos';
 import { validateCustomFields } from '../shared/customFields';
 import { loadFormSetting } from '../shared/formSetting';
 import { handle, json, readJsonBody } from '../shared/http';
-import type { CreateTaskInput, Task } from '../shared/taskModel';
+import type { CreateTaskInput, Task } from '../models/taskModel';
 import { resolveOrganizationId } from '../shared/identity';
 import { validateCreateTask } from '../shared/validation';
 

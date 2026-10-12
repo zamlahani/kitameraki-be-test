@@ -8,7 +8,6 @@ import { getFormSettingsContainer } from './cosmos';
 import { isCosmosNotFound } from './http';
 
 const TTL_MS = 30_000;
-// ponytail: per-process TTL cache; switch to a distributed cache only if multi-instance staleness matters.
 const cache = new Map<string, { value: FormSetting | undefined; expiresAt: number }>();
 
 export async function loadFormSetting(organizationId: string): Promise<FormSetting | undefined> {

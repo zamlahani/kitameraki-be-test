@@ -3,7 +3,7 @@ import { getTasksContainer } from '../shared/cosmos';
 import { filterCustomFields } from '../shared/customFields';
 import { loadFormSetting } from '../shared/formSetting';
 import { handle, json } from '../shared/http';
-import type { Task } from '../shared/taskModel';
+import type { Task } from '../models/taskModel';
 import { resolveOrganizationId } from '../shared/identity';
 
 app.http('GetTask', {
