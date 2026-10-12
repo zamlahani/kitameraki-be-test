@@ -1,33 +1,26 @@
-import { CosmosClient } from "@azure/cosmos";
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-
-
-export async function UpdateTask(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-    const body = await request.json() as object;
-    const taskId = request.query.get('id');
-    const organizationId = request.query.get('organizationId');
-
-    let patchRequests = [];
-
-    for (let key in body) {
-        patchRequests.push({
-            "op": "replace",
-            "path": `/${key}`,
-            "value": body[key]
-        });
-    }
-
-    const client = new CosmosClient("this is a connection string");
-    const createdTask = await client.database("TaskApp")
-        .container("Tasks")
-        .item(taskId, organizationId)
-        .patch(patchRequests);
-
-    return { jsonBody: createdTask.resource, status: 200 };
-};
+import type { PatchOperation } from '@azure/cosmos';
+import { app } from '@azure/functions';
+import { getTasksContainer } from '../shared/cosmos';
+import { handle, json, readJsonBody } from '../shared/http';
+import type { Task } from '../shared/taskModel';
+import { resolveOrganizationId } from '../shared/identity';
+import { validateUpdateTask } from '../shared/validation';
 
 app.http('UpdateTask', {
-    methods: ['POST'],
-    authLevel: 'anonymous',
-    handler: UpdateTask
+  methods: ['PUT'],
+  route: 'tasks/{id:guid}',
+  handler: handle(async (request) => {
+    const organizationId = resolveOrganizationId(request);
+    const body = validateUpdateTask(await readJsonBody(request));
+    const container = await getTasksContainer();
+
+    const operations: PatchOperation[] = Object.entries(body).map(([key, value]) => ({
+      op: 'set',
+      path: `/${key}`,
+      value,
+    }));
+
+    const { resource } = await container.item(request.params.id, organizationId).patch<Task>(operations);
+    return json(200, resource);
+  }),
 });

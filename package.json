@@ -1,23 +1,29 @@
 {
   "name": "kitameraki-be-test",
   "version": "1.0.0",
-  "description": "",
+  "description": "Task management API built with Azure Functions and Azure Cosmos DB",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
     "start": "func start",
-    "test": "echo \"No tests yet...\""
+    "seed": "npm run build && node dist/scripts/seed.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "@azure/cosmos": "^4.0.0",
-    "@azure/functions": "^4.0.0"
+    "@azure/cosmos": "^4.10.1",
+    "@azure/functions": "^4.16.5",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
   },
   "devDependencies": {
-    "@types/node": "^20.x",
+    "@types/node": "^24.0.0",
     "rimraf": "^5.0.0",
-    "typescript": "^4.0.0"
+    "typescript": "^5.6.0",
+    "vitest": "^5.0.3"
   },
-  "main": "dist/src/{index.js,functions/*.js}"
+  "main": "dist/src/functions/*.js"
 }

@@ -1,21 +1,30 @@
-import { CosmosClient } from "@azure/cosmos";
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-
-export async function GetTasks(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-    context.log(`Http function processed request for url "${request.url}"`);
-    const organizationId = request.query.get('organizationId');
-
-    const client = new CosmosClient("this is a connection string");
-    const task = await client.database("TaskApp")
-        .container("Tasks")
-        .items.query(`SELECT * FROM c WHERE c.organizationId = '${organizationId}'`)
-        .fetchNext();
-
-    return { jsonBody: task.resources, status: 200 };
-};
+import { app } from '@azure/functions';
+import { getTasksContainer } from '../shared/cosmos';
+import { handle, json } from '../shared/http';
+import type { Task } from '../shared/taskModel';
+import { resolveOrganizationId } from '../shared/identity';
+import { parseListTasksQuery, planListTasksQuery } from '../shared/taskQuery';
 
 app.http('GetTasks', {
-    methods: ['GET'],
-    authLevel: 'anonymous',
-    handler: GetTasks
+  methods: ['GET'],
+  route: 'tasks',
+  handler: handle(async (request) => {
+    const query = { ...parseListTasksQuery(request.query), organizationId: resolveOrganizationId(request) };
+    const plan = planListTasksQuery(query);
+    const container = await getTasksContainer();
+
+    const countResult = await container.items
+      .query<number>({ query: plan.countSql, parameters: plan.parameters })
+      .fetchAll();
+    const total = countResult.resources[0] ?? 0;
+
+    const pageResult = await container.items
+      .query<Task>({ query: plan.listSql, parameters: plan.parameters })
+      .fetchNext();
+
+    return json(200, {
+      items: pageResult.resources,
+      total,
+    });
+  }),
 });
