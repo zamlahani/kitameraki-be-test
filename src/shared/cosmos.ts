@@ -6,6 +6,7 @@ const BASE_DELAY_MS = 200;
 const MAX_DELAY_MS = 2000;
 
 let containerPromise: Promise<Container> | undefined;
+let formSettingsContainerPromise: Promise<Container> | undefined;
 
 export function getTasksContainer(): Promise<Container> {
   if (!containerPromise) {
@@ -15,6 +16,16 @@ export function getTasksContainer(): Promise<Container> {
     });
   }
   return containerPromise;
+}
+
+export function getFormSettingsContainer(): Promise<Container> {
+  if (!formSettingsContainerPromise) {
+    formSettingsContainerPromise = createFormSettingsContainer().catch((error) => {
+      formSettingsContainerPromise = undefined;
+      throw error;
+    });
+  }
+  return formSettingsContainerPromise;
 }
 
 function isTransientCosmosError(error: unknown): boolean {
@@ -63,6 +74,20 @@ async function createTasksContainer(): Promise<Container> {
           ],
         ],
       },
+    });
+    return container;
+  });
+}
+
+async function createFormSettingsContainer(): Promise<Container> {
+  const { cosmosConnectionString, cosmosDatabaseId, cosmosFormSettingsContainerId } = getConfig();
+
+  return retryTransient(async () => {
+    const client = new CosmosClient(cosmosConnectionString);
+    const { database } = await client.databases.createIfNotExists({ id: cosmosDatabaseId });
+    const { container } = await database.containers.createIfNotExists({
+      id: cosmosFormSettingsContainerId,
+      partitionKey: { paths: ['/organizationId'] },
     });
     return container;
   });

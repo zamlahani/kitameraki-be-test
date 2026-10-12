@@ -14,6 +14,8 @@ All routes are under the Functions prefix (`/api` locally). The organization (te
 | `PUT` | `/api/tasks/{id}` | Update a task. Body accepts `title`, `description`, `dueDate`, `priority`, `status`, `tags`. |
 | `DELETE` | `/api/tasks/{id}` | Delete a task. Returns `204`. |
 | `POST` | `/api/tasks/bulk-delete` | Delete many tasks. Body `{ "ids": ["..."] }`; returns `{ "deleted": <n> }`. |
+| `GET` | `/api/form-settings` | Get the organization's form setting (singleton). Returns a default empty setting (`rows: []`) when none is stored. |
+| `PUT` | `/api/form-settings` | Upsert the organization's form setting. Body `{ "rows": [{ "id", "fields": [1-2 fields] }] }`. |
 
 ### Example
 
@@ -70,6 +72,7 @@ curl -X POST "http://localhost:7071/api/tasks" -H "Content-Type: application/jso
 | `COSMOS_CONNECTION_STRING` | yes | - | Cosmos DB connection string (emulator or Azure). |
 | `COSMOS_DATABASE_ID` | no | `TaskApp` | Database name. |
 | `COSMOS_CONTAINER_ID` | no | `Tasks` | Container name (partition key `/organizationId`). |
+| `COSMOS_FORM_SETTINGS_CONTAINER_ID` | no | `FormSettings` | Form settings container name (partition key `/organizationId`). |
 | `ORGANIZATION_ID` | no | `00000000-0000-0000-0000-000000000001` | Tenant used when no authenticated principal is present (local dev fallback). |
 
 The database and container are created on first use, so no manual provisioning is required.
@@ -94,6 +97,7 @@ src/
 scripts/       # seed script
 test/          # unit tests
 task.schema.json   # single source of truth for the task shape
+formSetting.schema.json   # single source of truth for the form setting shape
 ```
 
 ## Security notes
