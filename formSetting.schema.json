@@ -50,6 +50,12 @@
                 },
                 "disabled": {
                   "type": "boolean"
+                },
+                "deletedAt": {
+                  "anyOf": [
+                    { "type": "string", "format": "date-time" },
+                    { "type": "null" }
+                  ]
                 }
               },
               "required": [

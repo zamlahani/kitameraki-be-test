@@ -46,6 +46,14 @@
       "maxItems": 100,
       "description": "Tags associated with the task"
     },
+    "customFields": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 1000
+      },
+      "description": "Values for the organization's custom form fields, keyed by field id"
+    },
     "createdAt": {
       "type": "string",
       "format": "date-time",

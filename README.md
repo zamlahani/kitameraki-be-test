@@ -11,11 +11,20 @@ All routes are under the Functions prefix (`/api` locally). The organization (te
 | `GET` | `/api/tasks` | List tasks. Query: `q`, `status`, `priority`, `tag`, `page` (default 1), `pageSize` (default 20, max 100). Sorted by `createdAt` desc (`id` asc tiebreak). Returns `{ items, total }`. |
 | `POST` | `/api/tasks` | Create a task. Body is validated against `task.schema.json`; `id` and `organizationId` are set server side. |
 | `GET` | `/api/tasks/{id}` | Get a task. |
-| `PUT` | `/api/tasks/{id}` | Update a task. Body accepts `title`, `description`, `dueDate`, `priority`, `status`, `tags`. |
+| `PUT` | `/api/tasks/{id}` | Update a task. Body accepts `title`, `description`, `dueDate`, `priority`, `status`, `tags`, `customFields`. |
 | `DELETE` | `/api/tasks/{id}` | Delete a task. Returns `204`. |
 | `POST` | `/api/tasks/bulk-delete` | Delete many tasks. Body `{ "ids": ["..."] }`; returns `{ "deleted": <n> }`. |
-| `GET` | `/api/form-settings` | Get the organization's form setting (singleton). Returns a default empty setting (`rows: []`) when none is stored. |
-| `PUT` | `/api/form-settings` | Upsert the organization's form setting. Body `{ "rows": [{ "id", "fields": [1-2 fields] }] }`. |
+| `GET` | `/api/form-settings` | Get the organization's form setting (singleton). Soft-deleted fields and their empty rows are filtered out. Returns a default empty setting (`rows: []`) when none is stored. |
+| `PUT` | `/api/form-settings` | Upsert the organization's form setting. Body `{ "rows": [{ "id", "fields": [1-2 fields] }] }`. A previously-active field omitted from the payload is soft-deleted (retained with `deletedAt`, not physically removed). |
+
+### Form settings and custom fields
+
+The form setting is one document per organization and applies to every task. It only declares **additional** fields; the built-in task properties from Part 1 stay fixed and come first. Each custom field has a stable `id` (its value key), a `type` (`text`, `date`, `datetime`, `email`), a `label`, `required`, `disabled` and `deletedAt`.
+
+- Task values live in `customFields`, a sparse map keyed by field `id`.
+- Writes (`POST`/`PUT /api/tasks`) load the current setting and reject (`400`) unknown field ids, values for `disabled` fields, type mismatches and missing `required` fields. Values for soft-deleted fields are ignored.
+- Reads never expose values for soft-deleted or unknown fields.
+- Deleting a field is soft: omit it from `PUT /api/form-settings` and it gets a `deletedAt`; re-sending the id reactivates it.
 
 ### Example
 
@@ -93,7 +102,8 @@ The database and container are created on first use, so no manual provisioning i
 ```
 src/
   functions/   # one file per HTTP function (registers itself via app.http)
-  shared/      # config, cosmos client, http helpers, validation, query builder
+  models/      # form setting document shape
+  shared/      # config, cosmos client, http helpers, validation, form setting, custom fields, query builder
 scripts/       # seed script
 test/          # unit tests
 task.schema.json   # single source of truth for the task shape

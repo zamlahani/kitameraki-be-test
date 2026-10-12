@@ -1,5 +1,7 @@
 import { app } from '@azure/functions';
 import { getTasksContainer } from '../shared/cosmos';
+import { filterCustomFields } from '../shared/customFields';
+import { loadFormSetting } from '../shared/formSetting';
 import { handle, json } from '../shared/http';
 import type { Task } from '../shared/taskModel';
 import { resolveOrganizationId } from '../shared/identity';
@@ -9,22 +11,23 @@ app.http('GetTasks', {
   methods: ['GET'],
   route: 'tasks',
   handler: handle(async (request) => {
-    const query = { ...parseListTasksQuery(request.query), organizationId: resolveOrganizationId(request) };
+    const organizationId = resolveOrganizationId(request);
+    const query = { ...parseListTasksQuery(request.query), organizationId };
     const plan = planListTasksQuery(query);
     const container = await getTasksContainer();
 
-    const countResult = await container.items
-      .query<number>({ query: plan.countSql, parameters: plan.parameters })
-      .fetchAll();
-    const total = countResult.resources[0] ?? 0;
-
-    const pageResult = await container.items
-      .query<Task>({ query: plan.listSql, parameters: plan.parameters })
-      .fetchNext();
+    const [countResult, pageResult, setting] = await Promise.all([
+      container.items.query<number>({ query: plan.countSql, parameters: plan.parameters }).fetchAll(),
+      container.items.query<Task>({ query: plan.listSql, parameters: plan.parameters }).fetchNext(),
+      loadFormSetting(organizationId),
+    ]);
 
     return json(200, {
-      items: pageResult.resources,
-      total,
+      items: pageResult.resources.map((task) => ({
+        ...task,
+        customFields: filterCustomFields(setting, task.customFields),
+      })),
+      total: countResult.resources[0] ?? 0,
     });
   }),
 });

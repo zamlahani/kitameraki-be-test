@@ -6,6 +6,7 @@ export interface FormField {
   label: string;
   required: boolean;
   disabled: boolean;
+  deletedAt: string | null;
 }
 
 export interface FormRow {
@@ -21,4 +22,4 @@ export interface FormSetting {
   updatedAt: string;
 }
 
-export const DEFAULT_FORM_SETTING_ID = 'form-setting';
+export const DEFAULT_FORM_SETTING_ID = 'default';

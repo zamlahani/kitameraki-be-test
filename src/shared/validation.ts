@@ -7,7 +7,7 @@ import type { FormRow } from '../models/formSettingModel';
 
 type JsonObject = Record<string, unknown>;
 
-const EDITABLE_FIELDS = ['title', 'description', 'dueDate', 'priority', 'status', 'tags'] as const;
+const EDITABLE_FIELDS = ['title', 'description', 'dueDate', 'priority', 'status', 'tags', 'customFields'] as const;
 
 function loadTaskSchema(): JsonObject {
   const schemaPath = path.resolve(process.cwd(), 'task.schema.json');
@@ -101,7 +101,11 @@ export function validateFormSetting(body: unknown): { rows: FormRow[] } {
     throw new HttpError(400, 'Invalid form setting payload', formatErrors(validate));
   }
 
-  const rows = (body as { rows: FormRow[] }).rows;
+  const rows = (body as { rows: FormRow[] }).rows.map((row) => ({
+    ...row,
+    fields: row.fields.map((field) => ({ ...field, deletedAt: null })),
+  }));
+
   const fieldIds = rows.flatMap((row) => row.fields.map((field) => field.id));
   if (new Set(fieldIds).size !== fieldIds.length) {
     throw new HttpError(400, 'Invalid form setting payload', ['field ids must be unique across the form']);
