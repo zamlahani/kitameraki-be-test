@@ -14,6 +14,7 @@
     },
     "title": {
       "type": "string",
+      "minLength": 1,
       "maxLength": 100,
       "description": "Title of the task"
     },
@@ -23,7 +24,7 @@
       "description": "Description of the task"
     },
     "dueDate": {
-      "type": "string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "Due date and time for the task"
     },

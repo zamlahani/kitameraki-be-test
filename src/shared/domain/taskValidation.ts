@@ -1,6 +1,6 @@
 import Ajv, { type ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
-import { HttpError } from '../infra/errors';
+import { HttpError, formatValidationErrors } from '../infra/errors';
 import taskSchema from '../../../task.schema.json';
 
 type JsonObject = Record<string, unknown>;
@@ -39,17 +39,10 @@ function getSchemas(): ReturnType<typeof compileSchemas> {
   return schemas;
 }
 
-function formatErrors(validate: ValidateFunction): string[] {
-  return (validate.errors ?? []).map((error) => {
-    const location = error.instancePath || (error.params as { missingProperty?: string }).missingProperty || 'body';
-    return `${location} ${error.message ?? 'is invalid'}`;
-  });
-}
-
 export function validateCreateTask(body: unknown): JsonObject {
   const validate = getSchemas().create;
   if (!validate(body)) {
-    throw new HttpError(400, 'Invalid task payload', formatErrors(validate));
+    throw new HttpError(400, 'Invalid task payload', formatValidationErrors(validate));
   }
   return body as JsonObject;
 }
@@ -57,7 +50,7 @@ export function validateCreateTask(body: unknown): JsonObject {
 export function validateUpdateTask(body: unknown): JsonObject {
   const validate = getSchemas().update;
   if (!validate(body)) {
-    throw new HttpError(400, 'Invalid task payload', formatErrors(validate));
+    throw new HttpError(400, 'Invalid task payload', formatValidationErrors(validate));
   }
   return body as JsonObject;
 }
