@@ -1,17 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { app } from '@azure/functions';
-import { getTasksContainer } from '../shared/cosmos';
-import { validateCustomFields } from '../shared/customFields';
-import { loadFormSetting } from '../shared/formSetting';
-import { handle, json, readJsonBody } from '../shared/http';
+import { getTasksContainer } from '../shared/infra/cosmos';
+import { validateCreateTask } from '../shared/domain/taskValidation';
+import { loadFormSetting } from '../shared/domain/formSetting';
+import { json, readJsonBody, withErrorBoundary } from '../shared/infra/http';
 import type { CreateTaskInput, Task } from '../models/taskModel';
-import { resolveOrganizationId } from '../shared/identity';
-import { validateCreateTask } from '../shared/validation';
+import { resolveOrganizationId } from '../shared/infra/identity';
+import { validateCustomFields } from "../shared/domain/customFieldValidation";
 
 app.http('InsertTask', {
   methods: ['POST'],
   route: 'tasks',
-  handler: handle(async (request) => {
+  handler: withErrorBoundary(async (request) => {
     const input = validateCreateTask(await readJsonBody(request)) as unknown as CreateTaskInput;
     const organizationId = resolveOrganizationId(request);
     const setting = await loadFormSetting(organizationId);

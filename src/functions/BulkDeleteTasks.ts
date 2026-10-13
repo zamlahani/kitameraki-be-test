@@ -1,13 +1,13 @@
 import { app } from '@azure/functions';
-import { getTasksContainer } from '../shared/cosmos';
-import { handle, isCosmosNotFound, json, readJsonBody } from '../shared/http';
-import { resolveOrganizationId } from '../shared/identity';
-import { validateBulkDeleteBody } from '../shared/validation';
+import { getTasksContainer, isCosmosNotFound } from '../shared/infra/cosmos';
+import { json, readJsonBody, withErrorBoundary } from '../shared/infra/http';
+import { resolveOrganizationId } from '../shared/infra/identity';
+import { validateBulkDeleteBody } from '../shared/domain/taskValidation';
 
 app.http('BulkDeleteTasks', {
   methods: ['POST'],
   route: 'tasks/bulk-delete',
-  handler: handle(async (request) => {
+  handler: withErrorBoundary(async (request) => {
     const organizationId = resolveOrganizationId(request);
     const ids = validateBulkDeleteBody(await readJsonBody(request));
     const container = await getTasksContainer();

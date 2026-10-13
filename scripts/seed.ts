@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { getTasksContainer } from '../src/shared/cosmos';
+import { getTasksContainer } from '../src/shared/infra/cosmos';
 import { TASK_PRIORITIES, TASK_STATUSES, type Task } from '../src/models/taskModel';
 
 const DEFAULT_ORGANIZATION_ID = '00000000-0000-0000-0000-000000000001';

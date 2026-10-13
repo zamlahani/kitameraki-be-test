@@ -1,7 +1,7 @@
-import Ajv, { type ValidateFunction } from 'ajv';
+import { Ajv, ValidateFunction } from "ajv";
+import { FormField, FormSetting } from "../../models/formSettingModel";
+import { HttpError } from "../infra/errors";
 import addFormats from 'ajv-formats';
-import type { FormField, FormSetting } from '../models/formSettingModel';
-import { HttpError } from './errors';
 
 const ajv = new Ajv({ allErrors: true, strict: false });
 addFormats(ajv);
@@ -12,26 +12,6 @@ const VALUE_VALIDATORS: Record<FormField['type'], ValidateFunction> = {
   date: ajv.compile({ type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' }),
   datetime: ajv.compile({ type: 'string', format: 'date-time' }),
 };
-
-function indexFields(setting: FormSetting | undefined): {
-  active: Map<string, FormField>;
-  deleted: Set<string>;
-} {
-  const active = new Map<string, FormField>();
-  const deleted = new Set<string>();
-
-  for (const row of setting?.rows ?? []) {
-    for (const field of row.fields) {
-      if (field.deletedAt) {
-        deleted.add(field.id);
-      } else {
-        active.set(field.id, field);
-      }
-    }
-  }
-
-  return { active, deleted };
-}
 
 export function validateCustomFields(
   setting: FormSetting | undefined,
@@ -76,6 +56,26 @@ export function validateCustomFields(
   }
 
   return values;
+}
+
+function indexFields(setting: FormSetting | undefined): {
+  active: Map<string, FormField>;
+  deleted: Set<string>;
+} {
+  const active = new Map<string, FormField>();
+  const deleted = new Set<string>();
+
+  for (const row of setting?.rows ?? []) {
+    for (const field of row.fields) {
+      if (field.deletedAt) {
+        deleted.add(field.id);
+      } else {
+        active.set(field.id, field);
+      }
+    }
+  }
+
+  return { active, deleted };
 }
 
 export function filterCustomFields(

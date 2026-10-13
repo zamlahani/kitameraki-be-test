@@ -1,16 +1,16 @@
 import { app } from '@azure/functions';
-import { getTasksContainer } from '../shared/cosmos';
-import { filterCustomFields } from '../shared/customFields';
-import { loadFormSetting } from '../shared/formSetting';
-import { handle, json } from '../shared/http';
+import { getTasksContainer } from '../shared/infra/cosmos';
+import { loadFormSetting } from '../shared/domain/formSetting';
+import { json, withErrorBoundary } from '../shared/infra/http';
 import type { Task } from '../models/taskModel';
-import { resolveOrganizationId } from '../shared/identity';
-import { parseListTasksQuery, planListTasksQuery } from '../shared/taskQuery';
+import { resolveOrganizationId } from '../shared/infra/identity';
+import { parseListTasksQuery, planListTasksQuery } from '../shared/domain/taskQuery';
+import { filterCustomFields } from "../shared/domain/customFieldValidation";
 
 app.http('GetTasks', {
   methods: ['GET'],
   route: 'tasks',
-  handler: handle(async (request) => {
+  handler: withErrorBoundary(async (request) => {
     const organizationId = resolveOrganizationId(request);
     const query = { ...parseListTasksQuery(request.query), organizationId };
     const plan = planListTasksQuery(query);

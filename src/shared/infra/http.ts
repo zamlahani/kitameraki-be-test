@@ -1,4 +1,5 @@
 import type { HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
+import { isCosmosNotFound } from './cosmos';
 import { HttpError } from './errors';
 
 export type HttpHandler = (request: HttpRequest, context: InvocationContext) => Promise<HttpResponseInit>;
@@ -7,7 +8,7 @@ export function json(status: number, body: unknown): HttpResponseInit {
   return { status, jsonBody: body };
 }
 
-export function handle(handler: HttpHandler): HttpHandler {
+export function withErrorBoundary(handler: HttpHandler): HttpHandler {
   return async (request, context) => {
     try {
       return await handler(request, context);
@@ -51,8 +52,4 @@ export async function readJsonBody(request: HttpRequest): Promise<unknown> {
   } catch {
     throw new HttpError(400, 'Request body must be valid JSON');
   }
-}
-
-export function isCosmosNotFound(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && (error as { code?: number }).code === 404;
 }

@@ -101,8 +101,10 @@ The database and container are created on first use, so no manual provisioning i
 ```
 src/
   functions/   # one file per HTTP function (registers itself via app.http)
-  models/      # form setting document shape
-  shared/      # config, cosmos client, http helpers, validation, form setting, custom fields, query builder
+  models/      # task & form setting document shapes
+  shared/
+    infra/     # config, cosmos client, http helpers, errors, identity
+    domain/    # query builder, validation, form setting, custom fields
 scripts/       # seed script
 test/          # unit tests
 task.schema.json   # single source of truth for the task shape

@@ -1,6 +1,10 @@
 import { CosmosClient, type Container } from '@azure/cosmos';
 import { getConfig } from './config';
 
+export function isCosmosNotFound(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && (error as { code?: number }).code === 404;
+}
+
 const MAX_ATTEMPTS = 5;
 const BASE_DELAY_MS = 200;
 const MAX_DELAY_MS = 2000;

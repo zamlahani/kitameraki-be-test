@@ -1,17 +1,17 @@
 import type { PatchOperation } from '@azure/cosmos';
 import { app } from '@azure/functions';
-import { getTasksContainer } from '../shared/cosmos';
-import { validateCustomFields } from '../shared/customFields';
-import { loadFormSetting } from '../shared/formSetting';
-import { handle, json, readJsonBody } from '../shared/http';
+import { getTasksContainer } from '../shared/infra/cosmos';
+import { validateUpdateTask } from '../shared/domain/taskValidation';
+import { loadFormSetting } from '../shared/domain/formSetting';
+import { json, readJsonBody, withErrorBoundary } from '../shared/infra/http';
 import type { Task } from '../models/taskModel';
-import { resolveOrganizationId } from '../shared/identity';
-import { validateUpdateTask } from '../shared/validation';
+import { resolveOrganizationId } from '../shared/infra/identity';
+import { validateCustomFields } from "../shared/domain/customFieldValidation";
 
 app.http('UpdateTask', {
   methods: ['PUT'],
   route: 'tasks/{id:guid}',
-  handler: handle(async (request) => {
+  handler: withErrorBoundary(async (request) => {
     const organizationId = resolveOrganizationId(request);
     const body = validateUpdateTask(await readJsonBody(request));
     const container = await getTasksContainer();
