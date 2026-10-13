@@ -10,7 +10,6 @@ All routes are under the Functions prefix (`/api` locally). The organization (te
 | --- | --- | --- |
 | `GET` | `/api/tasks` | List tasks. Query: `q`, `status`, `priority`, `tag`, `page` (default 1), `pageSize` (default 20, max 100). Sorted by `createdAt` desc (`id` asc tiebreak). Returns `{ items, total }`. |
 | `POST` | `/api/tasks` | Create a task. Body is validated against `task.schema.json`; `id` and `organizationId` are set server side. |
-| `GET` | `/api/tasks/{id}` | Get a task. |
 | `PUT` | `/api/tasks/{id}` | Update a task. Body accepts `title`, `description`, `dueDate`, `priority`, `status`, `tags`, `customFields`. |
 | `DELETE` | `/api/tasks/{id}` | Delete a task. Returns `204`. |
 | `POST` | `/api/tasks/bulk-delete` | Delete many tasks. Body `{ "ids": ["..."] }`; returns `{ "deleted": <n> }`. |

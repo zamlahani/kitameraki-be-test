@@ -1,26 +1,16 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import Ajv, { type ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import { HttpError } from './errors';
+import taskSchema from '../../task.schema.json';
+import formSettingSchema from '../../formSetting.schema.json';
 import type { FormRow } from '../models/formSettingModel';
 
 type JsonObject = Record<string, unknown>;
 
 const EDITABLE_FIELDS = ['title', 'description', 'dueDate', 'priority', 'status', 'tags', 'customFields'] as const;
 
-function loadTaskSchema(): JsonObject {
-  const schemaPath = path.resolve(process.cwd(), 'task.schema.json');
-  return JSON.parse(fs.readFileSync(schemaPath, 'utf8')) as JsonObject;
-}
-
-function loadFormSettingSchema(): JsonObject {
-  const schemaPath = path.resolve(process.cwd(), 'formSetting.schema.json');
-  return JSON.parse(fs.readFileSync(schemaPath, 'utf8')) as JsonObject;
-}
-
 function compileSchemas(): { create: ValidateFunction; update: ValidateFunction } {
-  const base = loadTaskSchema();
+  const base = taskSchema as JsonObject;
   const baseProperties = (base.properties ?? {}) as JsonObject;
 
   const ajv = new Ajv({ allErrors: true, strict: false });
@@ -53,7 +43,7 @@ function getSchemas(): ReturnType<typeof compileSchemas> {
 }
 
 function compileFormSchema(): ValidateFunction {
-  const base = loadFormSettingSchema();
+  const base = formSettingSchema as JsonObject;
   const baseProperties = (base.properties ?? {}) as JsonObject;
 
   const ajv = new Ajv({ allErrors: true, strict: false });
