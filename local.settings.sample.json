@@ -1,0 +1,11 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "COSMOS_CONNECTION_STRING": "AccountEndpoint=http://localhost:8081/;AccountKey=<emulator-key>;",
+    "COSMOS_DATABASE_ID": "TaskApp",
+    "COSMOS_CONTAINER_ID": "Tasks",
+    "ORGANIZATION_ID": "00000000-0000-0000-0000-000000000001"
+  }
+}

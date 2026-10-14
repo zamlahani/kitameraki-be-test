@@ -1,21 +1,33 @@
-import { CosmosClient } from "@azure/cosmos";
-import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-
-export async function GetTasks(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
-    context.log(`Http function processed request for url "${request.url}"`);
-    const organizationId = request.query.get('organizationId');
-
-    const client = new CosmosClient("this is a connection string");
-    const task = await client.database("TaskApp")
-        .container("Tasks")
-        .items.query(`SELECT * FROM c WHERE c.organizationId = '${organizationId}'`)
-        .fetchNext();
-
-    return { jsonBody: task.resources, status: 200 };
-};
+import { app } from '@azure/functions';
+import { getTasksContainer } from '../shared/infra/cosmos';
+import { loadFormSetting } from '../shared/domain/formSetting';
+import { json, withErrorBoundary } from '../shared/infra/http';
+import type { Task } from '../models/taskModel';
+import { resolveOrganizationId } from '../shared/infra/identity';
+import { parseListTasksQuery, planListTasksQuery } from '../shared/domain/taskQuery';
+import { filterCustomFields } from "../shared/domain/customFieldValidation";
 
 app.http('GetTasks', {
-    methods: ['GET'],
-    authLevel: 'anonymous',
-    handler: GetTasks
+  methods: ['GET'],
+  route: 'tasks',
+  handler: withErrorBoundary(async (request) => {
+    const organizationId = resolveOrganizationId(request);
+    const query = { ...parseListTasksQuery(request.query), organizationId };
+    const plan = planListTasksQuery(query);
+    const container = await getTasksContainer();
+
+    const [countResult, pageResult, setting] = await Promise.all([
+      container.items.query<number>({ query: plan.countSql, parameters: plan.parameters }).fetchAll(),
+      container.items.query<Task>({ query: plan.listSql, parameters: plan.parameters }).fetchNext(),
+      loadFormSetting(organizationId),
+    ]);
+
+    return json(200, {
+      items: pageResult.resources.map((task) => ({
+        ...task,
+        customFields: filterCustomFields(setting, task.customFields),
+      })),
+      total: countResult.resources[0] ?? 0,
+    });
+  }),
 });
