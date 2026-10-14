@@ -10,7 +10,7 @@ All routes are under the Functions prefix (`/api` locally). The organization (te
 | --- | --- | --- |
 | `GET` | `/api/tasks` | List tasks. Query: `q`, `status`, `priority`, `tag`, `page` (default 1), `pageSize` (default 20, max 100). Sorted by `createdAt` desc (`id` asc tiebreak). Returns `{ items, total }`. |
 | `POST` | `/api/tasks` | Create a task. Body is validated against `task.schema.json`; `id` and `organizationId` are set server side. |
-| `PUT` | `/api/tasks/{id}` | Update a task. Body accepts `title`, `description`, `dueDate`, `priority`, `status`, `tags`, `customFields`. |
+| `PUT` | `/api/tasks/{id}` | Partial update (PATCH semantics over `PUT`): only fields present in the body are validated and written; omitted fields keep their values; body must contain at least one field. Lets the UI send a status-only change without resending/re-validating the rest of the task. Body accepts `title`, `description`, `dueDate`, `priority`, `status`, `tags`, `customFields`. |
 | `DELETE` | `/api/tasks/{id}` | Delete a task. Returns `204`. |
 | `POST` | `/api/tasks/bulk-delete` | Delete many tasks. Body `{ "ids": ["..."] }`; returns `{ "deleted": <n> }`. |
 | `GET` | `/api/form-settings` | Get the organization's form setting (singleton). Soft-deleted fields and their empty rows are filtered out. Returns a default empty setting (`rows: []`) when none is stored. |
@@ -21,7 +21,7 @@ All routes are under the Functions prefix (`/api` locally). The organization (te
 The form setting is one document per organization and applies to every task. It only declares **additional** fields; the built-in task properties from Part 1 stay fixed and come first. Each custom field has a stable `id` (its value key), a `type` (`text`, `date`, `datetime`, `email`), a `label`, `required`, `disabled` and `deletedAt`.
 
 - Task values live in `customFields`, a sparse map keyed by field `id`.
-- Writes (`POST`/`PUT /api/tasks`) load the current setting and reject (`400`) unknown field ids, values for `disabled` fields, type mismatches and missing `required` fields. Values for soft-deleted fields are ignored.
+- Writes load the current setting and reject (`400`) unknown field ids, values for `disabled` fields, type mismatches and missing `required` fields. On `PUT`, this applies only when `customFields` is present in the payload (the setting is not even loaded otherwise); `POST` always validates. A status-only update therefore skips custom-field validation entirely. Values for soft-deleted fields are ignored.
 - Reads never expose values for soft-deleted or unknown fields.
 - Deleting a field is soft: omit it from `PUT /api/form-settings` and it gets a `deletedAt`; re-sending the id reactivates it.
 
